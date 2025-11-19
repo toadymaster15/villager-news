@@ -1,46 +1,441 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="https://raw.githubusercontent.com/toadymaster15/daily-apg/main/resources/articleCover1.png" type="image/png">
-  <title>villager news</title>
-  <style>
-    body {
-      background-color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      flex-direction: column;
-      font-family: Arial, sans-serif;
-      color: #000;
-      margin: 0;
-    }
-    .small {
-      font-size: 28px;
-      font-weight: bold;
-      color: #555;
-    }
-    .big {
-      font-size: 32px;
-      font-weight: bold;
-      margin: 8px 0;
-    }
-    .tiny {
-      font-size: 21px;
-      color: #555;
-    }
-    .tiny-ish-er {
-      font-size: 14px;
-      color: #555;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VILLAGER.NEWS - THE ONLY RELIABLE NEWS SOURCE</title>
+    <meta name="description" content="Breaking news, archives, and the official countdown.">
+    <style>
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('https://cdn.jsdelivr.net/gh/toadymaster15/villager-vip@main/resources/MinecraftRegular-Bmg3.otf') format('opentype');
+        }
+
+        :root {
+            --news-red: #b90000;
+            --news-dark-red: #8a0000;
+            --news-white: #ffffff;
+            --news-black: #111111;
+            --news-yellow: #ffd700;
+            --mc-border: 4px solid #000;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; cursor: url('https://github.com/toadymaster15/villager-vip/raw/refs/heads/main/resources/BigJusticeCursorNormal.cur'), auto; }
+        a, button, .episode-card { cursor: url('https://github.com/toadymaster15/villager-vip/raw/refs/heads/main/resources/BigJusticeCursorHover.cur'), pointer; }
+        
+        body {
+            font-family: 'Minecraft', monospace;
+            background-color: #222;
+            background-image: linear-gradient(45deg, #1a1a1a 25%, transparent 25%, transparent 75%, #1a1a1a 75%, #1a1a1a), linear-gradient(45deg, #1a1a1a 25%, transparent 25%, transparent 75%, #1a1a1a 75%, #1a1a1a);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+            color: var(--news-black);
+            overflow-x: hidden;
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        header { position: fixed; top: 0; width: 100%; background: var(--news-red); border-bottom: var(--mc-border); z-index: 1000; height: 80px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; height: 100%; max-width: 1600px; margin: 0 auto; }
+        .logo { font-size: 2.5rem; color: white; text-shadow: 4px 4px 0px #000; display: flex; align-items: center; gap: 15px; text-transform: uppercase; text-decoration: none; }
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-links a { color: white; text-decoration: none; font-size: 1.2rem; text-transform: uppercase; padding: 5px 10px; border: 2px solid transparent; }
+        .nav-links a:hover { background: white; color: var(--news-red); border: 2px solid black; }
+
+        .container { max-width: 1400px; margin: 120px auto 0; padding: 0 20px 40px 20px; min-height: 60vh; }
+        .view-section { display: none; animation: fadeIn 0.5s; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .status-board { background: #111; border: var(--mc-border); padding: 2rem; text-align: center; margin-bottom: 3rem; box-shadow: 10px 10px 0px var(--news-dark-red); }
+        .countdown-label { color: var(--news-yellow); font-size: 1.5rem; margin-bottom: 1rem; text-transform: uppercase; }
+        .countdown-timer { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+        .time-unit { background: #333; border: 2px solid #555; padding: 0.5rem 1.5rem; min-width: 100px; }
+        .time-val { font-size: 2.5rem; color: white; display: block; }
+        .time-label { color: #aaa; font-size: 0.8rem; text-transform: uppercase; }
+
+        .interactive-zone { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 4rem; }
+        .clicker-panel { background: #e0e0e0; border: var(--mc-border); padding: 2rem; text-align: center; box-shadow: 8px 8px 0px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; }
+        .testificate-btn { background: none; border: none; transition: transform 0.1s; cursor: pointer; padding: 10px; }
+        .testificate-btn:active { transform: scale(0.95); }
+        .testificate-btn.cooldown { filter: grayscale(100%) contrast(1.2); cursor: not-allowed; }
+        .testificate-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(5px 5px 0px rgba(0,0,0,0.3)); image-rendering: pixelated; }
+        .chance-display { background: black; color: var(--news-yellow); padding: 10px; font-size: 1.2rem; margin-top: 1rem; border: 2px solid white; width: 100%; }
+        .voting-panel { background: #333; color: white; border: var(--mc-border); padding: 2rem; text-align: center; box-shadow: 8px 8px 0px rgba(0,0,0,0.5); background-image: repeating-linear-gradient(45deg, #333, #333 10px, #222 10px, #222 20px); }
+        .vote-buttons { display: flex; gap: 1rem; justify-content: center; margin: 2rem 0; }
+        .vote-btn { padding: 1rem 2rem; font-size: 1.5rem; font-family: 'Minecraft'; border: 4px solid white; background: black; color: white; text-transform: uppercase; transition: all 0.2s; }
+        .vote-btn.yes:hover { background: #4CAF50; transform: translateY(-5px); }
+        .vote-btn.no:hover { background: #f44336; transform: translateY(-5px); }
+        .vote-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .progress-bar { width: 100%; height: 40px; background: #000; border: 2px solid white; position: relative; margin-top: 2rem; }
+        .progress-fill { height: 100%; background: var(--news-yellow); width: 50%; transition: width 0.5s ease-out; }
+        .progress-text { position: absolute; width: 100%; top: 50%; transform: translateY(-50%); color: white; font-weight: bold; mix-blend-mode: difference; z-index: 2; }
+
+        .featured-section { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-bottom: 4rem; }
+        .video-wrapper { background: black; border: var(--mc-border); aspect-ratio: 16/9; box-shadow: 8px 8px 0px rgba(0,0,0,0.5); }
+        .news-sidebar { background: white; border: var(--mc-border); padding: 1.5rem; box-shadow: 8px 8px 0px rgba(0,0,0,0.5); }
+        .sidebar-title { background: var(--news-red); color: white; padding: 10px; text-align: center; margin: -1.5rem -1.5rem 1rem -1.5rem; border-bottom: var(--mc-border); font-size: 1.2rem; }
+        .archive-title { font-size: 2.5rem; color: white; margin-bottom: 2rem; border-left: 10px solid var(--news-red); padding-left: 20px; text-transform: uppercase; }
+        .episode-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 2rem; }
+        .episode-card { background: white; border: var(--mc-border); transition: transform 0.2s; }
+        .episode-card:hover { transform: translate(-5px, -5px); box-shadow: 10px 10px 0px var(--news-yellow); }
+        .ep-thumb img { width: 100%; height: 160px; object-fit: cover; border-bottom: var(--mc-border); }
+        .ep-info { padding: 1rem; }
+
+        .commercial-break { background: #e0e0e0; border: var(--mc-border); padding: 3rem; margin-bottom: 4rem; background-image: repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px); }
+        .sponsor-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 2rem; }
+        .sponsor-card { background: white; border: 4px solid black; padding: 2rem; text-align: center; transition: transform 0.2s; }
+        .sponsor-card:hover { transform: scale(1.02); box-shadow: 10px 10px 0px var(--news-red); }
+        .sponsor-btn { display: inline-block; background: black; color: var(--news-yellow); padding: 10px 20px; text-decoration: none; margin-top: 1rem; }
+
+        footer { background: var(--news-black); color: #888; text-align: center; padding: 3rem 1rem; border-top: var(--mc-border); margin-top: 4rem; }
+        .ticker-wrap { position: fixed; bottom: 0; width: 100%; background: var(--news-yellow); height: 45px; z-index: 1000; border-top: var(--mc-border); display: flex; align-items: center; overflow: hidden; }
+        .ticker-move { display: inline-block; white-space: nowrap; animation: ticker 25s linear infinite; }
+        .ticker-item { display: inline-block; padding: 0 2rem; font-size: 1.3rem; color: black; text-transform: uppercase; }
+        @keyframes ticker { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+
+        @media (max-width: 900px) { .featured-section, .interactive-zone { grid-template-columns: 1fr; } .nav-links { display: none; } }
+    </style>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "API_KEY",
+            authDomain: "villagernews.firebaseapp.com",
+            projectId: "villagernews",
+            storageBucket: "villagernews.firebasestorage.app",
+            messagingSenderId: "441211498972",
+            appId: "APP_ID",
+            measurementId: "MEASURE"
+        };
+
+        let db, auth, currentUid;
+        let countdownInterval;
+
+        try {
+            if(window.location.protocol === 'file:') {
+                console.error("FIREBASE ERROR: Cannot run on file:// protocol.");
+            } else {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                signInAnonymously(auth).then((userCredential) => {
+                    currentUid = userCredential.user.uid;
+                    checkIfVoted();
+                });
+
+                setupDatabaseListeners();
+            }
+        } catch (e) {
+            console.error("Init Error:", e);
+        }
+
+        function setupDatabaseListeners() {
+            onSnapshot(doc(db, "stats", "global_clicks"), (doc) => {
+                if (doc.exists()) {
+                    const clicks = doc.data().count;
+                    const chance = (clicks * 0.0001).toFixed(4);
+                    document.getElementById('chanceDisplay').innerText = `GLOBAL PROBABILITY: ${chance}%`;
+                }
+            });
+
+            onSnapshot(doc(db, "stats", "prediction_votes"), (doc) => {
+                if (doc.exists()) {
+                    const data = doc.data();
+                    const total = (data.yes || 0) + (data.no || 0);
+                    if(total > 0) {
+                        const yesPercent = Math.round(((data.yes || 0) / total) * 100);
+                        document.getElementById('voteBarFill').style.width = `${yesPercent}%`;
+                        document.getElementById('votePercentage').innerText = `YES: ${yesPercent}% | NO: ${100 - yesPercent}%`;
+                    }
+                }
+            });
+
+            onSnapshot(doc(db, "stats", "latest_broadcast"), (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    const data = docSnapshot.data();
+                    
+                    if(data.date) {
+                        startCountdown(data.date);
+                    }
+
+                    if(data.videoId) {
+                        const iframe = document.getElementById('latestVideoFrame');
+                        if (!iframe.src.includes(data.videoId)) {
+                            iframe.src = `https://www.youtube.com/embed/${data.videoId}`;
+                        }
+                    }
+
+                    if(data.title) {
+                        document.getElementById('videoStatusText').innerHTML = `
+                            <strong style="color:var(--news-red)">LATEST SIGNAL:</strong> ${data.title}<br>
+                            <small>Detected by Satellite.</small>
+                        `;
+                    }
+                } else {
+                    // fallback
+                    startCountdown("2021-04-23T18:00:00");
+                }
+            });
+        }
+
+        function startCountdown(dateString) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            const targetDate = new Date(dateString).getTime();
+            
+            countdownInterval = setInterval(() => {
+                const now = new Date().getTime();
+                const diff = now - targetDate; 
+
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+                document.getElementById("days").innerText = d;
+                document.getElementById("hours").innerText = h;
+                document.getElementById("minutes").innerText = m;
+                document.getElementById("seconds").innerText = s;
+            }, 1000);
+        }
+
+        window.clickTestificate = async function() {
+            if(!db) return alert("Connect to a server first!");
+            const btn = document.getElementById('manBtn');
+            if(btn.classList.contains('cooldown')) return;
+
+            btn.classList.add('cooldown');
+            document.getElementById('manSpeech').innerText = "ococuuuhchhhh help me!!!!!#";
+            const audio = document.getElementById('pokeSound');
+            if(audio) { audio.currentTime = 0; audio.play(); }
+
+            try {
+                const ref = doc(db, "stats", "global_clicks");
+                await updateDoc(ref, { count: increment(1) }).catch(async () => {
+                    await setDoc(ref, { count: 1 });
+                });
+            } catch(e) { console.error(e); }
+
+            setTimeout(() => {
+                btn.classList.remove('cooldown');
+                document.getElementById('manSpeech').innerText = "it me testificat man ahhaha";
+            }, 2000);
+        }
+
+        window.vote = async function(type) {
+            if(!db || !currentUid) return alert("Database loading...");
+            const result = document.getElementById('voteResult');
+            try {
+                await setDoc(doc(db, "users", currentUid), { hasVoted: true });
+                const ref = doc(db, "stats", "prediction_votes");
+                await updateDoc(ref, { [type]: increment(1) }).catch(async () => {
+                    await setDoc(ref, { yes: 0, no: 0, [type]: 1 });
+                });
+
+                document.getElementById('voteYes').disabled = true;
+                document.getElementById('voteNo').disabled = true;
+                result.innerText = "vote registered. thx for your soul.";
+                const audio = document.getElementById('clickSound');
+                if(audio) { audio.currentTime = 0; audio.play(); }
+            } catch (e) {
+                result.innerText = "ERROR: DATABASE PERMISSION DENIED.";
+            }
+        }
+
+        async function checkIfVoted() {
+            if(!currentUid) return;
+            try {
+                const userDoc = await getDoc(doc(db, "users", currentUid));
+                if(userDoc.exists() && userDoc.data().hasVoted) {
+                    document.getElementById('voteYes').disabled = true;
+                    document.getElementById('voteNo').disabled = true;
+                    document.getElementById('voteResult').innerText = "YOU HAVE ALREADY VOTED.";
+                }
+            } catch (e) {}
+        }
+    </script>
 </head>
 <body>
-  <div class="small">hi</div>
-  <div class="big">i building something cool</div>
-  <div class="tiny">i think</div>
-  <div class="tiny-ish-er">thx</div>
+
+    <header>
+        <nav>
+            <a href="#" class="logo" onclick="navigateTo('home'); return false;">
+                <span style="background: white; color: black; padding: 0 10px; transform: skew(-10deg);">VILLAGER</span>
+                <span style="color: white;">NEWS</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#" onclick="navigateTo('home'); return false;">DASHBOARD</a></li>
+                <li><a href="#about" onclick="navigateTo('about'); return false;">ABOUT</a></li>
+                <li><a href="https://www.youtube.com/user/ElementAnimation" target="_blank">OFFICIAL CHANNEL</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div id="home-view" class="view-section active">
+        <div class="container">
+            
+            <section class="status-board">
+                <div class="countdown-label">TIME SINCE LAST OFFICIAL BROADCAST</div>
+                <div class="countdown-timer">
+                    <div class="time-unit"><span class="time-val" id="days">00</span><span class="time-label">Days</span></div>
+                    <div class="time-unit"><span class="time-val" id="hours">00</span><span class="time-label">Hours</span></div>
+                    <div class="time-unit"><span class="time-val" id="minutes">00</span><span class="time-label">Minutes</span></div>
+                    <div class="time-unit"><span class="time-val" id="seconds">00</span><span class="time-label">Seconds</span></div>
+                </div>
+            </section>
+
+            <section class="interactive-zone">
+                <div class="clicker-panel">
+                    <h2 style="margin-bottom:1rem; text-transform:uppercase;">Summon the news</h2>
+                    <div style="background:white; padding:5px 10px; border:2px solid black; border-radius:10px; margin-bottom:1rem;">
+                        <span id="manSpeech">it me testificat man ahhaha</span>
+                    </div>
+                    
+                    <button id="manBtn" class="testificate-btn" onclick="clickTestificate()">
+                        <img src="https://github.com/toadymaster15/villager-vip/blob/main/resources/testificiatemann.png?raw=true" 
+                             alt="Testificate Man" 
+                             class="testificate-img"
+                             onerror="this.src='https://github.com/toadymaster15/villager-vip/blob/main/resources/testificiatemann.png?raw=true'">
+                    </button>
+
+                    <div class="chance-display" id="chanceDisplay">CONNECTING TO DB...</div>
+                    <p style="font-size:0.8rem; margin-top:0.5rem;">(villager #91 insists it work)</p>
+                </div>
+
+                <div class="voting-panel">
+                    <h2>COMMUNITY PREDICTION</h2>
+                    <p style="margin-top:1rem;">Will we get a new episode in 2025?</p>
+                    
+                    <div class="vote-buttons">
+                        <button id="voteYes" class="vote-btn yes" onclick="vote('yes')">YES</button>
+                        <button id="voteNo" class="vote-btn no" onclick="vote('no')">NO</button>
+                    </div>
+                    
+                    <p id="voteResult" style="font-weight:bold; font-size:0.9rem;">ONE VOTE PER VILLAGER.</p>
+
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="voteBarFill"></div>
+                        <div class="progress-text" id="votePercentage">FETCHING DATA...</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="featured-section">
+                <div class="video-wrapper">
+                    <iframe id="latestVideoFrame" 
+                            width="100%" height="100%" 
+                            src="https://www.youtube.com/embed/ZeGLH-OzWho" 
+                            title="Villager News" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen 
+                            style="border: none;">
+                    </iframe>
+                </div>
+                <aside class="news-sidebar">
+                    <div class="sidebar-title">STATION LOG</div>
+                    <ul style="list-style: none; padding:0;">
+                        <li id="videoStatusText" style="margin-bottom:1rem; border-bottom:1px solid #eee; padding-bottom:1rem;">
+                            <strong style="color:var(--news-red)">STATUS:</strong> MONITORING<br>
+                            <small>We are watching the Element Animation channel.</small>
+                        </li>
+                        <li style="margin-bottom:1rem; border-bottom:1px solid #eee; padding-bottom:1rem;">
+                            <strong>WEATHER:</strong><br>
+                            <small>bep bep bep curnetly very clear wehter villager #192 out</small>
+                        </li>
+                    </ul>
+                </aside>
+            </section>
+
+            <h2 class="archive-title">ARCHIVED FOOTAGE</h2>
+            <div class="episode-grid" id="episodeGrid"></div>
+        </div>
+    </div>
+
+    <div id="about-view" class="view-section">
+        <div class="container">
+            <section class="commercial-break">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:4px solid black; padding-bottom:1rem; margin-bottom:2rem;">
+                    <h1 style="font-size:3rem;">STATION SPONSORS</h1>
+                    <span style="background:red; color:white; padding:5px 10px;">COMMERCIALS</span>
+                </div>
+                <p style="font-size:1.2rem; max-width:800px;">
+                    <strong>VILLAGER.NEWS</strong> is fully fan-made. For the love of the game. 
+                    However, we have some other cool things we've made, check it out!.
+                </p>
+                <div class="sponsor-grid">
+                    <div class="sponsor-card">
+                        <h2 style="color:var(--news-red);">DR TRAY</h2>
+                        <div style="font-size:4rem; margin:1rem 0;">🧪</div>
+                        <p>dr. trayaurus's cool tools!! most notably the villager vip auto clicker!! (the best auto clicker to ever exist)</p>
+                        <a href="https://dr-trayaurus.itch.io/" target="_blank" class="sponsor-btn">VISIT LAB</a>
+                    </div>
+                </div>
+                <div style="margin-top:3rem; text-align:center;">
+                    <button onclick="navigateTo('home')" class="vote-btn" style="background:white; color:black; border-color:black;">return to more-ish official news</button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <footer>
+        <p>2025 villager.news (FAN SITE!!!!). Not affiliated with Element Animation.</p>
+        <p style="color: #555; font-size: 0.8rem; margin-top: 10px;">All news are copyright their respective owners.</p>
+        <div style="margin-top: 1rem; border: 1px solid #444; display: inline-block; padding: 5px 10px;">
+            SIGNAL STRENGTH: <span style="color:green">STRONG</span>
+        </div>
+    </footer>
+
+    <audio id="pokeSound" src="https://github.com/toadymaster15/villager-vip/raw/refs/heads/main/resources/wood_click.wav"></audio>
+    <audio id="clickSound" src="https://github.com/toadymaster15/villager-vip/raw/refs/heads/main/resources/click.wav"></audio>
+
+    <div class="ticker-wrap">
+        <div class="ticker-label">BREAKING</div>
+        <div class="ticker-move">
+            <div class="ticker-item">
+                "WE STILL MISS VILLAGER #4" - VILLAGER VIP • TESTIFICATE MAN SAVES VILLAGER NEWS? • THE VILLAGER AUTO CLICKER BREAKS RECORDS • EMERALD'S VALUE INCREASES BY 1.02% •
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function navigateTo(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById(viewId + '-view');
+            if(target) target.classList.add('active');
+
+            if(viewId === 'home') {
+                history.replaceState(null, null, ' '); 
+            } else {
+                history.replaceState(null, null, '#' + viewId);
+            }
+            window.scrollTo(0,0);
+        }
+
+        window.addEventListener('load', () => {
+            if(window.location.hash === '#about') navigateTo('about');
+            else navigateTo('home');
+        });
+
+        const episodes = [
+            { title: "Villager News: WAR!", thumb: "https://img.youtube.com/vi/CleUrqPLCzU/hqdefault.jpg", link: "https://www.youtube.com/watch?v=CleUrqPLCzU" },
+            { title: "Villager News: THE GIANT PROBLEM", thumb: "https://img.youtube.com/vi/1hoSYvwnv_E/hqdefault.jpg", link: "https://www.youtube.com/watch?v=1hoSYvwnv_E" },
+            { title: "Villager News: CHRISTMAS", thumb: "https://img.youtube.com/vi/U3p21FI9WBw/hqdefault.jpg", link: "https://www.youtube.com/watch?v=U3p21FI9WBw" },
+            { title: "Villager TV", thumb: "https://img.youtube.com/vi/b_VRJa9rjso/hqdefault.jpg", link: "https://www.youtube.com/watch?v=b_VRJa9rjso" }
+        ];
+        const grid = document.getElementById('episodeGrid');
+        episodes.forEach(ep => {
+            grid.innerHTML += `
+                <div class="episode-card" onclick="window.open('${ep.link}')">
+                    <div class="ep-thumb"><img src="${ep.thumb}" alt="${ep.title}"></div>
+                    <div class="ep-info"><h3>${ep.title}</h3></div>
+                </div>`;
+        });
+    </script>
 </body>
 </html>
